@@ -7,23 +7,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../../styles.css">
 </head>
 <body>
 
   <div class="page">
 
     <div class="page-header">
-      <h1 class="title"><a href="../index.html" style="color:inherit;text-decoration:none">justesen<span class="dot">.</span><span class="tld">xyz</span></a></h1>
+      <h1 class="title"><a href="../../index.html" style="color:inherit;text-decoration:none">justesen<span class="dot">.</span><span class="tld">xyz</span></a></h1>
       <nav class="page-nav">
-        <a href="../about.html">about</a>
-        <a href="../work.html">work</a>
-        <a href="../log.html" class="active">log</a>
-        <a href="../contact.html">contact</a>
+        <a href="../../about.html">about</a>
+        <a href="../../work.html">work</a>
+        <a href="../../log.html" class="active">log</a>
+        <a href="../../contact.html">contact</a>
       </nav>
     </div>
 
-    <a href="../log.html" class="post-back">← back to log</a>
+    <a href="../../log.html" class="post-back">← back to log</a>
 
     <div class="log-date">2026 · 02 · 20</div>
     <div class="log-title" style="font-size:15px;margin-bottom:4px;">Estimating π with a shotgun (and other terrible sampling strategies)</div>
@@ -120,7 +120,7 @@
       <h2>Let's see it work</h2>
 
       <p>
-        I wrote a simulation (<a href="zombie_pi.py" style="color:var(--fg)">zombie_pi.py</a>)
+        I wrote a simulation (<a href="code.py" style="color:var(--fg)">code.py</a>)
         that estimates π using four different sampling distributions:
       </p>
 
@@ -139,7 +139,7 @@
 
       <p>Here's what 50,000 samples look like for each:</p>
 
-      <img src="../assets/scatter_comparison.png" alt="Scatter comparison of four sampling strategies"
+      <img src="../../assets/scatter_comparison.png" alt="Scatter comparison of four sampling strategies"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
@@ -147,7 +147,7 @@
         Here's the convergence:
       </p>
 
-      <img src="../assets/convergence.png" alt="Convergence curves for all four methods"
+      <img src="../../assets/convergence.png" alt="Convergence curves for all four methods"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
@@ -169,7 +169,7 @@
         to weight:
       </p>
 
-      <img src="../assets/importance_weights.png" alt="Importance weights visualisation"
+      <img src="../../assets/importance_weights.png" alt="Importance weights visualisation"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
@@ -205,7 +205,7 @@
         the density values at those points, and it returns π. The full
         simulation script with all four samplers, figures, and convergence
         analysis is available as
-        <a href="zombie_pi.py" style="color:var(--fg)">zombie_pi.py</a>.
+        <a href="code.py" style="color:var(--fg)">code.py</a>.
       </p>
 
       <h2>Takeaway</h2>
