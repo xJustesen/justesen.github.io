@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estimating π with a shotgun · justesen.xyz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+  <div class="page">
+
+    <div class="page-header">
+      <h1 class="title"><a href="../index.html" style="color:inherit;text-decoration:none">justesen<span class="dot">.</span><span class="tld">xyz</span></a></h1>
+      <nav class="page-nav">
+        <a href="../about.html">about</a>
+        <a href="../work.html">work</a>
+        <a href="../log.html" class="active">log</a>
+        <a href="../contact.html">contact</a>
+      </nav>
+    </div>
+
+    <a href="../log.html" class="post-back">← back to log</a>
+
+    <div class="log-date">2026 · 02 · 20</div>
+    <div class="log-title" style="font-size:15px;margin-bottom:4px;">Estimating π with a shotgun (and other terrible sampling strategies)</div>
+    <div class="log-tags" style="margin-bottom:0;">
+      <span class="log-tag">monte-carlo</span>
+      <span class="log-tag">statistics</span>
+      <span class="log-tag">python</span>
+      <span class="log-tag">zombies</span>
+    </div>
+
+    <div class="post-body">
+
+      <h2>The scenario</h2>
+
+      <p>
+        It's 2077. Civilisation has collapsed. The undead roam the earth. You've
+        barricaded yourself in an abandoned university library with a shotgun,
+        a roll of aluminium foil, and a vague memory of your undergraduate
+        statistics course. You need to calculate π — maybe you're building a
+        water wheel, maybe you're just trying to stay sane — but the power
+        grid is down and all you have is your trusty Mossberg 500. How do you do it?
+      </p>
+
+      <p>
+        This is, roughly speaking, the premise of a
+        <a href="https://arxiv.org/abs/1404.1499" style="color:var(--fg)">great 2014 paper</a>
+        by Dumoulin & Thouin, who actually fired a Mossberg 500 at aluminium foil
+        and used the pellet holes to estimate π via Monte Carlo methods. They got
+        within 0.33% of the true value.
+      </p>
+
+      <p>
+        But what I find genuinely interesting about the paper isn't (just) the shotgun gimmick — it's
+        the technique they used to make it work: <em>importance
+        sampling</em>. Because a shotgun doesn't produce uniform samples.
+        And the standard "throw darts at a square" Monte Carlo method for π
+        assumes uniform samples. So how do you solve that?
+      </p>
+
+      <p>
+        The answer turns out to be elegant, general, and worth understanding
+        even if you never plan to discharge a firearm in the dark.
+      </p>
+
+      <h2>The classic approach (uniform sampling)</h2>
+
+      <p>
+        The textbook version goes like this. Take the unit square [0,1]² and
+        inscribe a quarter circle of radius 1. The area of the quarter circle
+        is π/4, and the area of the square is 1. So if you throw N points
+        <em>uniformly</em> at random into the square and count how many land inside the
+        quarter circle, you get:
+      </p>
+
+      <p style="text-align:center; letter-spacing:1px; margin:20px 0;">
+        π ≈ 4 × (hits / N)
+      </p>
+
+      <p>
+        Its simple and it works. But it <em>requires</em> that your points are
+        <em>uniformly</em> distributed. If they're following any other distribution (like, say,
+        the one produced by a shotgun), this naïve counting will give you the wrong answer.
+      </p>
+
+      <h2>Importance sampling: use any distribution</h2>
+
+      <p>
+        Here's where it gets interesting. The Monte Carlo estimate of π is
+        really just an expected value:
+      </p>
+
+      <p style="text-align:center; letter-spacing:1px; margin:20px 0;">
+        π/4 = E<sub>f</sub>[g(x)] = ∫ f(x) g(x) dx
+      </p>
+
+      <p>
+        where f(x) is the uniform density on [0,1]² and g(x) = 1 if x is
+        inside the quarter circle and 0 otherwise. The key insight of importance
+        sampling is that you can rewrite this as:
+      </p>
+
+      <p style="text-align:center; letter-spacing:1px; margin:20px 0;">
+        π/4 = E<sub>q</sub>[ g(x) · f(x) / q(x) ]
+      </p>
+
+      <p>
+        for <em>any</em> distribution q(x) with support covering the unit
+        square. The ratio f(x)/q(x) acts as a correction weight: samples from
+        dense regions of q get weighted less, and samples from sparse regions
+        get weighted more. And this works for <em>any</em> q — Gaussian,
+        Beta, a literal shotgun spread — as long as you know, or can estimate,
+        the density.
+      </p>
+
+      <h2>Let's see it work</h2>
+
+      <p>
+        I wrote a simulation (<a href="zombie_pi.py" style="color:var(--fg)">zombie_pi.py</a>)
+        that estimates π using four different sampling distributions:
+      </p>
+
+      <p>
+        <strong>Uniform</strong> — the textbook approach. No importance
+        weights needed.<br>
+        <strong>Gaussian (μ=0.5, σ=0.3)</strong> — samples pile up in the
+        centre. Importance sampling corrects for this.<br>
+        <strong>Shotgun (clustered)</strong> — simulated shotgun blasts with
+        random cluster centres and Gaussian spread per shot. Density
+        estimated with a 2D histogram, exactly like the original paper.<br>
+        <strong>Beta (α=2, β=5)</strong> — heavily skewed toward the
+        top-left corner. Most of the probability mass is nowhere near the
+        quarter circle boundary.
+      </p>
+
+      <p>Here's what 50,000 samples look like for each:</p>
+
+      <img src="../assets/scatter_comparison.png" alt="Scatter comparison of four sampling strategies"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        The distributions look completely different, but importance sampling gives the same answer.
+        Here's the convergence:
+      </p>
+
+      <img src="../assets/convergence.png" alt="Convergence curves for all four methods"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        All four converge to π! The uniform sampler is the smoothest by far (no
+        correction is needed). The Gaussian and Beta samplers converge nicely
+        but with slightly higher variance due to the importance weights. The
+        shotgun is the noisiest. This is because we're estimating q(x) from
+        the data itself, which adds uncertainty on top of uncertainty.
+      </p>
+
+      <h2>How the weights work, visually</h2>
+
+      <p>
+        To build intuition, here's what importance sampling does to the
+        Gaussian case. The left panel shows the proposal density q(x,y) —
+        lots of mass in the centre. The middle panel shows the importance
+        weights f(x)/q(x) — samples near the edges get boosted. The right
+        panel shows the weighted samples, where marker size is proportional
+        to weight:
+      </p>
+
+      <img src="../assets/importance_weights.png" alt="Importance weights visualisation"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        The corner samples are rare but heavy. The centre samples are
+        abundant but light. After weighting, the <em>effective</em> distribution is
+        uniform — exactly what we need for the π estimate to work!
+      </p>
+
+      <h2>The code</h2>
+
+      <p>
+        The importance sampling estimator itself is very simple:
+      </p>
+
+<pre><code>def estimate_pi_importance(x, y, q_x, q_y):
+    """
+    f(x,y) = 1 on [0,1]²   (target density)
+    q(x,y) = q_x * q_y      (proposal density)
+    g(x,y) = 1 if x²+y² ≤ 1 (quarter circle indicator)
+
+    π ≈ 4 × (1/N) Σ g(xᵢ,yᵢ) / q(xᵢ,yᵢ)
+    """
+    mask = (x >= 0) & (x <= 1) & (y >= 0) & (y <= 1)
+    g = (x[mask]**2 + y[mask]**2 <= 1.0).astype(float)
+    weights = 1.0 / (q_x[mask] * q_y[mask])
+
+    full = np.zeros_like(x)
+    full[mask] = g * weights
+    return 4.0 * full.mean()</code></pre>
+
+      <p>
+        That's it. You give it samples from any distribution along with
+        the density values at those points, and it returns π. The full
+        simulation script with all four samplers, figures, and convergence
+        analysis is available as
+        <a href="zombie_pi.py" style="color:var(--fg)">zombie_pi.py</a>.
+      </p>
+
+      <h2>What is actually interesting here</h2>
+
+      <p>
+        The shotgun and zombie framing is great fun, but the really interesting takeaway
+        is the generality of importance sampling. In practice, we
+        rarely get to sample from the distribution we want. Real-world data is messy.
+        Importance sampling says: that's fine! 
+        As long as you can characterise the bias, you can correct for it.
+      </p>
+
+      <p>
+        The shotgun sampler is the hardest case here because we don't even
+        know q(x) analytically — we have to estimate it from the same data
+        we're using for the π calculation (using a held-out split and
+        histogram density estimation, as in the original paper). But it
+        still works! The estimate is noisy, but it converges.
+      </p>
+
+      <p>
+        So next time civilisation collapses: grab a shotgun, some foil, and
+        the importance sampling formula. You'll have π within the hour.
+      </p>
+
+    </div>
+
+    <footer class="footer" style="width:100%">© 2026 justesen.xyz</footer>
+
+  </div>
+
+  <div class="lightbox-overlay" id="lightbox">
+    <img id="lightbox-img" src="" alt="">
+  </div>
+  <div class="lightbox-hint">click or press esc to close</div>
+
+  <script>
+    const overlay = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightbox-img');
+
+    document.querySelectorAll('.post-body img').forEach(img => {
+      img.addEventListener('click', () => {
+        lbImg.src = img.src;
+        lbImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+
+    overlay.addEventListener('click', () => {
+      overlay.classList.remove('active');
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') overlay.classList.remove('active');
+    });
+  </script>
+
+</body>
+</html>
