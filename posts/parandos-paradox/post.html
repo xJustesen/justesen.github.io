@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two Losing Bets Walk Into a Bar · justesen.xyz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+
+  <div class="page">
+
+    <div class="page-header">
+      <h1 class="title"><a href="../../index.html" style="color:inherit;text-decoration:none">justesen<span class="dot">.</span><span class="tld">xyz</span></a></h1>
+      <nav class="page-nav">
+        <a href="../../about.html">about</a>
+        <a href="../../work.html">work</a>
+        <a href="../../log.html" class="active">log</a>
+        <a href="../../contact.html">contact</a>
+      </nav>
+    </div>
+
+    <a href="../../log.html" class="post-back">← back to log</a>
+
+    <div class="log-date">2026 · 03 · 01</div>
+    <div class="log-title" style="font-size:15px;margin-bottom:4px;">Two Losing Bets Walk Into a Bar</div>
+    <div class="log-tags" style="margin-bottom:0;">
+      <span class="log-tag">python</span>
+      <span class="log-tag">monte-carlo</span>
+      <span class="log-tag">statistics</span>
+    </div>
+
+    <div class="post-body">
+
+      <h2>The intervention</h2>
+
+      <p>
+        Your friend is a terrible gambler. He's found two games at the casino
+        and, through months of meticulous record-keeping, has proven beyond
+        doubt that he loses money at both. So he does the only logical thing:
+        he plays both games, switching between them at random. And starts
+        winning.
+      </p>
+
+      <p>
+        You stage an intervention. But the math is on his side.
+      </p>
+
+      <p>
+        This is <em>Parrondo's paradox</em>, first described by the Spanish
+        physicist Juan Parrondo in 1996 and formalised by
+        <a href="https://www.nature.com/articles/22484" style="color:var(--fg)">Harmer &amp; Abbott (1999)</a>
+        in <em>Nature</em>. Two individually losing strategies can combine into
+        a winning one. It sounds like a scam. It's a theorem.
+      </p>
+
+      <h2>The two games</h2>
+
+      <p>
+        <strong>Game A</strong> is a simple biased coin. You win $1 with
+        probability p<sub>1</sub> and lose $1 otherwise. Set
+        p<sub>1</sub>&nbsp;=&nbsp;0.495 — just below fair. A slow, steady
+        bleed.
+      </p>
+
+      <p>
+        <strong>Game B</strong> is capital-dependent. If your total capital
+        is divisible by 3, you flip a <em>bad</em> coin with win probability
+        p<sub>2</sub>&nbsp;=&nbsp;0.095. Otherwise, you flip a <em>good</em>
+        coin with win probability p<sub>3</sub>&nbsp;=&nbsp;0.745.
+      </p>
+
+      <p style="text-align:center; letter-spacing:1px; margin:24px 0;">
+        p<sub>1</sub> = 0.495 &nbsp;&nbsp;·&nbsp;&nbsp;
+        p<sub>2</sub> = 0.095 &nbsp;&nbsp;·&nbsp;&nbsp;
+        p<sub>3</sub> = 0.745
+      </p>
+
+      <p>
+        Game B <em>looks</em> like it should win — after all, you flip the good
+        coin two-thirds of the time. But it doesn't. The Markov chain dynamics
+        push you into the "divisible by 3" state more often than you'd expect,
+        and the bad coin eats your gains. Both games lose. Every simulation
+        confirms it.
+      </p>
+
+      <h2>Now play both</h2>
+
+      <p>
+        Here's the twist. Each round, flip a fair coin to decide which game to
+        play — A or B, fifty-fifty. I simulated 1,000 players over 10,000
+        rounds for each strategy:
+      </p>
+
+      <img src="../../assets/capital_trajectories.png" alt="Capital trajectories for Game A, Game B, and the combined strategy"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        Game A bleeds. Game B bleeds. The combined strategy climbs. Two losers
+        make a winner.
+      </p>
+
+      <h2>Why it works: the ratchet</h2>
+
+      <p>
+        The explanation lives in the mod-3 state distribution. When you play
+        Game B alone, the Markov chain settles into a steady state that
+        <em>overweights</em> state 0 — the "divisible by 3" state where you
+        face the bad coin. In my simulation, players spend about 38% of their
+        time in state 0, far above the 33% you'd see with uniform distribution.
+        This is enough to make the overall expected value negative.
+      </p>
+
+      <p>
+        Game A acts as a <em>ratchet</em>. Since Game A doesn't depend on
+        capital mod 3, playing it disrupts Game B's unfavourable equilibrium.
+        It redistributes your capital across the mod-3 states, pushing you
+        away from state 0 and onto the good coin more often. Here's the
+        distribution shift:
+      </p>
+
+      <img src="../../assets/state_distribution.png" alt="Mod-3 state distribution: Game B alone vs combined vs theoretical uniform"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        Game B alone: state 0 at 38.4%. Combined strategy: state 0 drops to
+        34.5%, much closer to the theoretical 33.3%. That small redistribution
+        is enough to flip the expected value from negative to positive. The
+        ratchet doesn't need to be dramatic — it just needs to nudge you
+        off the bad equilibrium.
+      </p>
+
+      <h2>How robust is it?</h2>
+
+      <p>
+        You might wonder if this is a knife-edge result — fragile, dependent
+        on hitting exactly the right parameters. It's not. Here's a sweep
+        across (p<sub>2</sub>,&nbsp;p<sub>3</sub>) parameter space with
+        p<sub>1</sub> fixed at 0.495. The dark region is where the combined
+        strategy wins:
+      </p>
+
+      <img src="../../assets/parameter_sweep.png" alt="Parameter sweep heatmap showing where the combined strategy wins"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        There's a solid region above the contour line where two losing games
+        produce a winning combination. The paradox is structurally robust,
+        not a numerical accident.
+      </p>
+
+      <h2>The code</h2>
+
+      <p>
+        The core logic fits in a single function:
+      </p>
+
+<pre><code>def play_round(capital, game, rng, p1=0.495, p2=0.095, p3=0.745):
+    """Play one round. Returns +1 (win) or -1 (loss)."""
+    if game == 'A':
+        return 1 if rng.random() < p1 else -1
+    else:  # Game B
+        if capital % 3 == 0:
+            return 1 if rng.random() < p2 else -1
+        else:
+            return 1 if rng.random() < p3 else -1</code></pre>
+
+      <p>
+        That's it — the entire paradox in eight lines. Game A checks one
+        probability. Game B checks your capital mod 3 and picks the
+        corresponding coin. The full simulation with all three figures
+        is available as <a href="code.py" style="color:var(--fg)">code.py</a>.
+      </p>
+
+      <h2>Takeaway</h2>
+
+      <p>
+        The deep lesson of Parrondo's paradox is that combining stochastic
+        processes is not the same as combining their expected values. When
+        dynamics are state-dependent, mixing strategies can create structure
+        that neither strategy has alone. The random switching disrupts an
+        unfavourable equilibrium, and that disruption alone is enough to
+        flip the outcome.
+      </p>
+
+      <p>
+        This isn't just a mathematical curiosity. The same mechanism appears
+        in biology — fluctuating environments can benefit populations that
+        would decline in either environment alone. In physics, it connects
+        to <em>Brownian ratchets</em>, where directed motion emerges from
+        combining two processes that individually produce none.
+      </p>
+
+      <p>
+        So the next time someone you love finds two losing games at the
+        casino — maybe hear them out. Check their modular arithmetic first.
+      </p>
+
+    </div>
+
+    <footer class="footer" style="width:100%">&copy; 2026 justesen.xyz</footer>
+
+  </div>
+
+  <div class="lightbox-overlay" id="lightbox">
+    <img id="lightbox-img" src="" alt="">
+  </div>
+  <div class="lightbox-hint">click or press esc to close</div>
+
+  <script>
+    const overlay = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightbox-img');
+
+    document.querySelectorAll('.post-body img').forEach(img => {
+      img.addEventListener('click', () => {
+        lbImg.src = img.src;
+        lbImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+
+    overlay.addEventListener('click', () => {
+      overlay.classList.remove('active');
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') overlay.classList.remove('active');
+    });
+  </script>
+
+</body>
+</html>
