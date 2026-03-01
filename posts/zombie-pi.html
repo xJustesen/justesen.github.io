@@ -64,8 +64,8 @@
       </p>
 
       <p>
-        The answer turns out to be elegant, general, and worth understanding
-        even if you never plan to discharge a firearm in the dark.
+        The answer is worth understanding even if you never plan to
+        discharge a firearm in the dark.
       </p>
 
       <h2>The classic approach (uniform sampling)</h2>
@@ -83,7 +83,7 @@
       </p>
 
       <p>
-        Its simple and it works. But it <em>requires</em> that your points are
+        It's simple and it works. But it <em>requires</em> that your points are
         <em>uniformly</em> distributed. If they're following any other distribution (like, say,
         the one produced by a shotgun), this naïve counting will give you the wrong answer.
       </p>
@@ -91,8 +91,7 @@
       <h2>Importance sampling: use any distribution</h2>
 
       <p>
-        Here's where it gets interesting. The Monte Carlo estimate of π is
-        really just an expected value:
+        The Monte Carlo estimate of π is really just an expected value:
       </p>
 
       <p style="text-align:center; letter-spacing:1px; margin:20px 0;">
@@ -162,7 +161,7 @@
       <h2>How the weights work, visually</h2>
 
       <p>
-        To build intuition, here's what importance sampling does to the
+        Here's what importance sampling does to the
         Gaussian case. The left panel shows the proposal density q(x,y) —
         lots of mass in the centre. The middle panel shows the importance
         weights f(x)/q(x) — samples near the edges get boosted. The right
@@ -176,7 +175,7 @@
       <p>
         The corner samples are rare but heavy. The centre samples are
         abundant but light. After weighting, the <em>effective</em> distribution is
-        uniform — exactly what we need for the π estimate to work!
+        uniform — which is what we need for the π estimate to work.
       </p>
 
       <h2>The code</h2>
@@ -209,14 +208,13 @@
         <a href="zombie_pi.py" style="color:var(--fg)">zombie_pi.py</a>.
       </p>
 
-      <h2>What is actually interesting here</h2>
+      <h2>Takeaway</h2>
 
       <p>
-        The shotgun and zombie framing is great fun, but the really interesting takeaway
-        is the generality of importance sampling. In practice, we
-        rarely get to sample from the distribution we want. Real-world data is messy.
-        Importance sampling says: that's fine! 
-        As long as you can characterise the bias, you can correct for it.
+        The shotgun framing is fun, but what matters here is the generality
+        of importance sampling. We rarely get to sample from the distribution
+        we actually want — importance sampling says that's fine, as long as
+        you can characterise the bias, you can correct for it.
       </p>
 
       <p>
