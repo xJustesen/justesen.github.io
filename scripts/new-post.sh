@@ -26,110 +26,38 @@ if [[ -d "$POST_DIR" ]]; then
   exit 1
 fi
 
-# Date in YYYY · MM · DD format
+# Date in YYYY · MM · DD format (log.html) and ISO format (front matter)
 DATE="$(date +%Y' · '%m' · '%d)"
+ISO_DATE="$(date +%Y-%m-%d)"
 
-# Build tag spans
-TAG_HTML=""
+# Front matter tag list: "a, b" -> [a, b]
+FM_TAGS=""
 if [[ -n "$TAGS" ]]; then
   IFS=',' read -ra TAG_ARRAY <<< "$TAGS"
   for tag in "${TAG_ARRAY[@]}"; do
     tag="$(echo "$tag" | xargs)"  # trim whitespace
-    TAG_HTML="$TAG_HTML      <span class=\"log-tag\">$tag</span>
-"
+    FM_TAGS="${FM_TAGS:+$FM_TAGS, }$tag"
   done
 fi
 
-# Create post directory and HTML file
+# Create post directory and HTML file (header, footer, lightbox come from _layouts/post.html)
 mkdir -p "$POST_DIR"
 
 cat > "$POST_DIR/post.html" << POSTEOF
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>$TITLE · justesen.xyz</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../styles.css">
-</head>
-<body>
-
-  <div class="page">
-
-    <div class="page-header">
-      <h1 class="title"><a href="../../index.html" style="color:inherit;text-decoration:none">justesen<span class="dot">.</span><span class="tld">xyz</span></a></h1>
-      <nav class="page-nav">
-        <a href="../../about.html">about</a>
-        <a href="../../work.html">work</a>
-        <a href="../../log.html" class="active">log</a>
-        <a href="../../contact.html">contact</a>
-      </nav>
-    </div>
-
-    <a href="../../log.html" class="post-back">← back to log</a>
-
-    <div class="log-date">$DATE</div>
-    <div class="log-title" style="font-size:15px;margin-bottom:4px;">$TITLE</div>
-    <div class="log-tags" style="margin-bottom:0;">
-$TAG_HTML    </div>
-
-    <div class="post-body">
+---
+layout: post
+title: "$TITLE"
+date: $ISO_DATE
+nav: log
+tags: [$FM_TAGS]
+---
 
       <h2>Introduction</h2>
 
       <p>
         Start writing here.
       </p>
-
-    </div>
-
-    <footer class="footer" style="width:100%">&copy; 2026 justesen.xyz</footer>
-
-  </div>
-
-  <div class="lightbox-overlay" id="lightbox">
-    <img id="lightbox-img" src="" alt="">
-  </div>
-  <div class="lightbox-hint">click or press esc to close</div>
-
-  <script>
-    const overlay = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lightbox-img');
-
-    document.querySelectorAll('.post-body img').forEach(img => {
-      img.addEventListener('click', () => {
-        lbImg.src = img.src;
-        lbImg.alt = img.alt;
-        overlay.classList.add('active');
-      });
-    });
-
-    overlay.addEventListener('click', () => {
-      overlay.classList.remove('active');
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') overlay.classList.remove('active');
-    });
-  </script>
-
-</body>
-</html>
 POSTEOF
-
-# Build log entry tag spans (indented for log.html context)
-LOG_TAG_HTML=""
-if [[ -n "$TAGS" ]]; then
-  IFS=',' read -ra TAG_ARRAY <<< "$TAGS"
-  for tag in "${TAG_ARRAY[@]}"; do
-    tag="$(echo "$tag" | xargs)"
-    LOG_TAG_HTML="$LOG_TAG_HTML        <span class=\"log-tag\">$tag</span>
-"
-  done
-fi
 
 # Build the new log entry
 LOG_ENTRY="\\

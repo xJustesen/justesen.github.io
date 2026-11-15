@@ -1,0 +1,8 @@
+- name: about
+  url: /about.html
+- name: work
+  url: /work.html
+- name: log
+  url: /log.html
+- name: contact
+  url: /contact.html

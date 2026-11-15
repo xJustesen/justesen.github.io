@@ -1,0 +1,26 @@
+---
+layout: base
+---
+  <div class="page">
+
+    {% include header.html %}
+
+    <a href="{{ '/log.html' | relative_url }}" class="post-back">← back to log</a>
+
+    <div class="log-date">{{ page.date | date: '%Y · %m · %d' }}</div>
+    <div class="log-title" style="font-size:15px;margin-bottom:4px;">{{ page.title }}</div>
+    <div class="log-tags" style="margin-bottom:0;">
+      {%- for tag in page.tags %}
+      <span class="log-tag">{{ tag }}</span>
+      {%- endfor %}
+    </div>
+
+    <div class="post-body">
+{{ content }}
+    </div>
+
+    {% include footer.html full_width=true %}
+
+  </div>
+
+  {% include lightbox.html %}

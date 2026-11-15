@@ -1,16 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>justesen.xyz</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
+---
+layout: base
+---
   <div class="container">
 
     <h1 class="title">justesen<span class="dot">.</span><span class="tld">xyz</span></h1>
@@ -20,17 +10,14 @@
       <div class="hist" id="hist"></div>
       <div class="axis-line"></div>
       <nav class="nav" id="nav">
-        <a href="about.html">about</a>
-        <a href="work.html">work</a>
-        <a href="log.html">log</a>
-        <a href="contact.html">contact</a>
+        {%- for item in site.data.nav %}
+        <a href="{{ item.url | relative_url }}">{{ item.name }}</a>
+        {%- endfor %}
       </nav>
     </div>
 
   </div>
 
-  <footer class="footer">© 2026 justesen.xyz</footer>
+  {% include footer.html %}
 
-  <script src="main.js"></script>
-</body>
-</html>
+  <script src="{{ '/main.js' | relative_url }}"></script>
