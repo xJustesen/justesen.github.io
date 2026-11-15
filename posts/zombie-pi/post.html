@@ -9,43 +9,39 @@ tags: [monte-carlo, statistics, python]
       <h2>The scenario</h2>
 
       <p>
-        It's 2077. Civilisation has collapsed. The undead roam the earth. You've
-        barricaded yourself in an abandoned university library with a shotgun,
-        a roll of aluminium foil, and a vague memory of your undergraduate
-        statistics course. You need to calculate π — maybe you're building a
-        water wheel, maybe you're just trying to stay sane — but the power
-        grid is down and all you have is your trusty Mossberg 500. How do you do it?
+        It's 2077 and civilisation has collapsed. You've barricaded yourself
+        in an abandoned university library. You have a shotgun, a roll of
+        aluminium foil and some half-remembered undergrad statistics. For
+        some reason you need π. Maybe you're building a water wheel, maybe
+        you just want something to do. The power has been out for years, so
+        no computer. How do you get it?
       </p>
 
       <p>
-        This is, roughly speaking, the premise of a
-        <a href="https://arxiv.org/abs/1404.1499" style="color:var(--fg)">great 2014 paper</a>
-        by Dumoulin & Thouin, who actually fired a Mossberg 500 at aluminium foil
-        and used the pellet holes to estimate π via Monte Carlo methods. They got
-        within 0.33% of the true value.
+        This is more or less the setup of a
+        <a href="https://arxiv.org/abs/1404.1499" style="color:var(--fg)">2014 paper</a>
+        by Dumoulin &amp; Thouin that I love. They really did fire a Mossberg
+        500 at sheets of aluminium foil, then used the pellet holes to
+        estimate π with Monte Carlo. Their answer was within 0.33% of the
+        true value.
       </p>
 
       <p>
-        But what I find genuinely interesting about the paper isn't (just) the shotgun gimmick — it's
-        the technique they used to make it work: <em>importance
-        sampling</em>. Because a shotgun doesn't produce uniform samples.
-        And the standard "throw darts at a square" Monte Carlo method for π
-        assumes uniform samples. So how do you solve that?
+        The shotgun is a good gimmick, but I like the paper more for the
+        trick that makes it work, which is <em>importance sampling</em>. The
+        usual "throw darts at a square" way of estimating π needs the darts
+        to land uniformly, and shotgun pellets don't. Importance sampling is
+        how you get around that, and it's useful far beyond firearms.
       </p>
 
-      <p>
-        The answer is worth understanding even if you never plan to
-        discharge a firearm in the dark.
-      </p>
-
-      <h2>The classic approach (uniform sampling)</h2>
+      <h2>The usual approach: uniform sampling</h2>
 
       <p>
-        The textbook version goes like this. Take the unit square [0,1]² and
-        inscribe a quarter circle of radius 1. The area of the quarter circle
-        is π/4, and the area of the square is 1. So if you throw N points
-        <em>uniformly</em> at random into the square and count how many land inside the
-        quarter circle, you get:
+        Here's the textbook method. Draw the unit square [0,1]² and put a
+        quarter circle of radius 1 inside it, centred on the corner. The
+        quarter circle has area π/4 and the square has area 1. Scatter N
+        points <em>uniformly</em> over the square and count how many land
+        inside the quarter circle. Then:
       </p>
 
       <p style="text-align:center; letter-spacing:1px; margin:20px 0;">
@@ -53,15 +49,15 @@ tags: [monte-carlo, statistics, python]
       </p>
 
       <p>
-        It's simple and it works. But it <em>requires</em> that your points are
-        <em>uniformly</em> distributed. If they're following any other distribution (like, say,
-        the one produced by a shotgun), this naïve counting will give you the wrong answer.
+        It's simple, and it works as long as the points really are uniform.
+        If they come from some other distribution, like a shotgun spread,
+        plain counting gives you the wrong number.
       </p>
 
-      <h2>Importance sampling: use any distribution</h2>
+      <h2>Importance sampling: any distribution will do</h2>
 
       <p>
-        The Monte Carlo estimate of π is really just an expected value:
+        The trick is to notice that the π estimate is just an expected value:
       </p>
 
       <p style="text-align:center; letter-spacing:1px; margin:20px 0;">
@@ -69,9 +65,10 @@ tags: [monte-carlo, statistics, python]
       </p>
 
       <p>
-        where f(x) is the uniform density on [0,1]² and g(x) = 1 if x is
-        inside the quarter circle and 0 otherwise. The key insight of importance
-        sampling is that you can rewrite this as:
+        Here f(x) is the uniform density on [0,1]², and g(x) is 1 if x is
+        inside the quarter circle and 0 if it isn't. Multiply and divide by
+        some other density q(x) and you get the same thing written
+        differently:
       </p>
 
       <p style="text-align:center; letter-spacing:1px; margin:20px 0;">
@@ -79,79 +76,77 @@ tags: [monte-carlo, statistics, python]
       </p>
 
       <p>
-        for <em>any</em> distribution q(x) with support covering the unit
-        square. The ratio f(x)/q(x) acts as a correction weight: samples from
-        dense regions of q get weighted less, and samples from sparse regions
-        get weighted more. And this works for <em>any</em> q — Gaussian,
-        Beta, a literal shotgun spread — as long as you know, or can estimate,
-        the density.
+        This holds for any q(x) that puts some probability everywhere on the
+        unit square. The ratio f(x)/q(x) is a correction weight. Points from
+        regions where q is dense count for less, and points from regions
+        where q is sparse count for more. q can be a Gaussian, a Beta or an
+        actual shotgun blast. You just need to know its density, or be able
+        to estimate it.
       </p>
 
-      <h2>Let's see it work</h2>
+      <h2>Trying it out</h2>
 
       <p>
         I wrote a simulation (<a href="code.py" style="color:var(--fg)">code.py</a>)
-        that estimates π using four different sampling distributions:
+        that estimates π with four different sampling distributions:
       </p>
 
       <p>
-        <strong>Uniform</strong> — the textbook approach. No importance
-        weights needed.<br>
-        <strong>Gaussian (μ=0.5, σ=0.3)</strong> — samples pile up in the
-        centre. Importance sampling corrects for this.<br>
-        <strong>Shotgun (clustered)</strong> — simulated shotgun blasts with
-        random cluster centres and Gaussian spread per shot. Density
-        estimated with a 2D histogram, exactly like the original paper.<br>
-        <strong>Beta (α=2, β=5)</strong> — heavily skewed toward the
-        top-left corner. Most of the probability mass is nowhere near the
-        quarter circle boundary.
+        <strong>Uniform</strong>: the textbook version. Every weight is 1.<br>
+        <strong>Gaussian (μ=0.5, σ=0.3)</strong>: points bunch up in the
+        middle, and the weights correct for it.<br>
+        <strong>Shotgun (clustered)</strong>: simulated blasts, each with a
+        random aim point and a Gaussian spread of pellets around it. I
+        estimate the density with a 2D histogram, which is what the paper
+        did.<br>
+        <strong>Beta (α=2, β=5)</strong>: heavily skewed towards one corner,
+        so most of the points are nowhere near the edge of the quarter
+        circle.
       </p>
 
-      <p>Here's what 50,000 samples look like for each:</p>
+      <p>This is what 50,000 samples from each one look like:</p>
 
       <img src="../../assets/scatter_comparison.png" alt="Scatter comparison of four sampling strategies"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
-        The distributions look completely different, but importance sampling gives the same answer.
-        Here's the convergence:
+        The four clouds look nothing alike, but after weighting they all
+        give the same answer. Here's how the estimates converge:
       </p>
 
       <img src="../../assets/convergence.png" alt="Convergence curves for all four methods"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
-        All four converge to π! The uniform sampler is the smoothest by far (no
-        correction is needed). The Gaussian and Beta samplers converge nicely
-        but with slightly higher variance due to the importance weights. The
-        shotgun is the noisiest. This is because we're estimating q(x) from
-        the data itself, which adds uncertainty on top of uncertainty.
+        They all end up at π. Uniform is the smoothest, since nothing needs
+        correcting. Gaussian and Beta get there too but wobble a bit more,
+        because the weights add variance. The shotgun is the noisiest of the
+        four. Its density q(x) has to be estimated from the data, so there's
+        uncertainty in the weights on top of the usual sampling noise.
       </p>
 
-      <h2>How the weights work, visually</h2>
+      <h2>What the weights look like</h2>
 
       <p>
-        Here's what importance sampling does to the
-        Gaussian case. The left panel shows the proposal density q(x,y) —
-        lots of mass in the centre. The middle panel shows the importance
-        weights f(x)/q(x) — samples near the edges get boosted. The right
-        panel shows the weighted samples, where marker size is proportional
-        to weight:
+        Here's the Gaussian case broken down. The left panel is the proposal
+        density q(x,y), with most of its mass in the middle. The middle panel
+        shows the weights f(x)/q(x), which get bigger towards the edges. The
+        right panel shows the samples with marker size scaled by weight:
       </p>
 
       <img src="../../assets/importance_weights.png" alt="Importance weights visualisation"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
-        The corner samples are rare but heavy. The centre samples are
-        abundant but light. After weighting, the <em>effective</em> distribution is
-        uniform — which is what we need for the π estimate to work.
+        The corner points are rare but heavy, and the centre points are
+        common but light. Once you weight them, they act like a uniform
+        sample, and that's what the π estimate needs.
       </p>
 
       <h2>The code</h2>
 
       <p>
-        The importance sampling estimator itself is very simple:
+        The estimator only takes a few lines:
       </p>
 
 <pre><code>def estimate_pi_importance(x, y, q_x, q_y):
@@ -171,31 +166,30 @@ tags: [monte-carlo, statistics, python]
     return 4.0 * full.mean()</code></pre>
 
       <p>
-        That's it. You give it samples from any distribution along with
-        the density values at those points, and it returns π. The full
-        simulation script with all four samplers, figures, and convergence
-        analysis is available as
+        You pass in samples from any distribution, plus the density at each
+        sample, and you get back π. The full script, with all four samplers,
+        the figures and the convergence analysis, is in
         <a href="code.py" style="color:var(--fg)">code.py</a>.
       </p>
 
-      <h2>Takeaway</h2>
+      <h2>Wrapping up</h2>
 
       <p>
-        The shotgun framing is fun, but what matters here is the generality
-        of importance sampling. We rarely get to sample from the distribution
-        we actually want — importance sampling says that's fine, as long as
-        you can characterise the bias, you can correct for it.
+        The shotgun is the fun part, but the general idea is the reason to
+        care. You almost never get to sample from the distribution you
+        actually want. Importance sampling says that's OK: if you know how
+        your samples are biased, you can undo the bias.
       </p>
 
       <p>
-        The shotgun sampler is the hardest case here because we don't even
-        know q(x) analytically — we have to estimate it from the same data
-        we're using for the π calculation (using a held-out split and
-        histogram density estimation, as in the original paper). But it
-        still works! The estimate is noisy, but it converges.
+        The shotgun was the hardest of the four because there's no formula
+        for its density. I had to estimate q(x) from the pellet holes
+        themselves, using half the samples to build a histogram and the
+        other half to compute π, as in the paper. The result is noisy, but
+        it still converges.
       </p>
 
       <p>
-        So next time civilisation collapses: grab a shotgun, some foil, and
-        the importance sampling formula. You'll have π within the hour.
+        So if civilisation does collapse, bring a shotgun, some foil and the
+        importance sampling formula, and you'll have π within the hour.
       </p>
