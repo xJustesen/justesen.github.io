@@ -1,40 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Estimating π with a shotgun · justesen.xyz</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../styles.css">
-</head>
-<body>
-
-  <div class="page">
-
-    <div class="page-header">
-      <h1 class="title"><a href="../../index.html" style="color:inherit;text-decoration:none">justesen<span class="dot">.</span><span class="tld">xyz</span></a></h1>
-      <nav class="page-nav">
-        <a href="../../about.html">about</a>
-        <a href="../../work.html">work</a>
-        <a href="../../log.html" class="active">log</a>
-        <a href="../../contact.html">contact</a>
-      </nav>
-    </div>
-
-    <a href="../../log.html" class="post-back">← back to log</a>
-
-    <div class="log-date">2026 · 02 · 20</div>
-    <div class="log-title" style="font-size:15px;margin-bottom:4px;">Estimating π with a shotgun (and other terrible sampling strategies)</div>
-    <div class="log-tags" style="margin-bottom:0;">
-      <span class="log-tag">monte-carlo</span>
-      <span class="log-tag">statistics</span>
-      <span class="log-tag">python</span>
-      <span class="log-tag">zombies</span>
-    </div>
-
-    <div class="post-body">
+---
+layout: post
+title: "The importance of having a shotgun in the event of a zombie apocalypse"
+date: 2026-02-20
+nav: log
+tags: [monte-carlo, statistics, python]
+---
 
       <h2>The scenario</h2>
 
@@ -229,38 +199,3 @@
         So next time civilisation collapses: grab a shotgun, some foil, and
         the importance sampling formula. You'll have π within the hour.
       </p>
-
-    </div>
-
-    <footer class="footer" style="width:100%">© 2026 justesen.xyz</footer>
-
-  </div>
-
-  <div class="lightbox-overlay" id="lightbox">
-    <img id="lightbox-img" src="" alt="">
-  </div>
-  <div class="lightbox-hint">click or press esc to close</div>
-
-  <script>
-    const overlay = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lightbox-img');
-
-    document.querySelectorAll('.post-body img').forEach(img => {
-      img.addEventListener('click', () => {
-        lbImg.src = img.src;
-        lbImg.alt = img.alt;
-        overlay.classList.add('active');
-      });
-    });
-
-    overlay.addEventListener('click', () => {
-      overlay.classList.remove('active');
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') overlay.classList.remove('active');
-    });
-  </script>
-
-</body>
-</html>

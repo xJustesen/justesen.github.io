@@ -1,0 +1,8 @@
+title: justesen.xyz
+url: https://justesen.xyz
+
+exclude:
+  - Makefile
+  - README.md
+  - CLAUDE.md
+  - scripts
