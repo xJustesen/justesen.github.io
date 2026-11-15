@@ -9,33 +9,36 @@ tags: [python, monte-carlo, statistics]
       <h2>The intervention</h2>
 
       <p>
-        Your friend is a terrible gambler. He's found two games at the casino
-        and has the spreadsheets to prove he loses money at both. So he
-        starts playing both games, switching between them at random. And
-        starts winning.
+        Say you have a friend who is a terrible gambler. He's found two games
+        at the casino, and he has spreadsheets showing he loses money at
+        both. Then one night he starts alternating between them at random,
+        and his balance starts going up.
       </p>
 
       <p>
-        This is <em>Parrondo's paradox</em>, described by the Spanish
-        physicist Juan Parrondo in 1996 and formalised by
-        <a href="https://www.nature.com/articles/47220" style="color:var(--fg)">Harmer &amp; Abbott (1999)</a>.
-        Two individually losing strategies can combine into a winning one.
+        Before you stage an intervention: he might actually be onto
+        something. This is <em>Parrondo's paradox</em>. The Spanish physicist
+        Juan Parrondo came up with it in 1996, and
+        <a href="https://www.nature.com/articles/47220" style="color:var(--fg)">Harmer &amp; Abbott (1999)</a>
+        wrote it up properly a few years later. The short version is that
+        two losing games can be combined into a winning one.
       </p>
 
       <h2>The two games</h2>
 
       <p>
-        <strong>Game A</strong> is a simple biased coin. You win $1 with
-        probability p<sub>1</sub> and lose $1 otherwise. Set
-        p<sub>1</sub>&nbsp;=&nbsp;0.495 — just below fair, so you lose
-        slowly.
+        <strong>Game A</strong> is a slightly biased coin. You win $1 with
+        probability p<sub>1</sub> and lose $1 otherwise. I used
+        p<sub>1</sub>&nbsp;=&nbsp;0.495, so it's just under fair and you
+        lose money slowly.
       </p>
 
       <p>
-        <strong>Game B</strong> is capital-dependent. If your total capital
-        is divisible by 3, you flip a <em>bad</em> coin with win probability
-        p<sub>2</sub>&nbsp;=&nbsp;0.095. Otherwise, you flip a <em>good</em>
-        coin with win probability p<sub>3</sub>&nbsp;=&nbsp;0.745.
+        <strong>Game B</strong> depends on how much money you have. If your
+        capital is divisible by 3, you flip a <em>bad</em> coin that wins
+        with probability p<sub>2</sub>&nbsp;=&nbsp;0.095. If it isn't, you
+        flip a <em>good</em> coin that wins with probability
+        p<sub>3</sub>&nbsp;=&nbsp;0.745.
       </p>
 
       <p style="text-align:center; letter-spacing:1px; margin:24px 0;">
@@ -45,75 +48,78 @@ tags: [python, monte-carlo, statistics]
       </p>
 
       <p>
-        Game B looks like it should win — you flip the good coin two-thirds
-        of the time. But the Markov chain dynamics push you into the
-        "divisible by 3" state more often than you'd expect, and the bad
-        coin wipes out the gains. Both games lose.
+        At first glance Game B looks like a winner, since two out of three
+        capital values give you the good coin. The catch is that the game
+        keeps steering you back to a multiple of 3. You end up on the bad
+        coin more often than a third of the time, and those losses eat
+        everything the good coin earns. So both games lose.
       </p>
 
       <h2>Now play both</h2>
 
       <p>
-        Each round, flip a fair coin to decide which game to play — A or B,
-        fifty-fifty. I simulated 1,000 players over 10,000 rounds for each
-        strategy:
+        Here's the switching strategy: before each round, flip a fair coin
+        and use it to pick A or B. I simulated 1,000 players for 10,000
+        rounds under each strategy.
       </p>
 
       <img src="../../assets/capital_trajectories.png" alt="Capital trajectories for Game A, Game B, and the combined strategy"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
-        Both games lose on their own. The combined strategy goes up.
+        A goes down. B goes down. The mix goes up.
       </p>
 
-      <h2>Why it works: the ratchet</h2>
+      <h2>Why it works</h2>
 
       <p>
-        It comes down to the mod-3 state distribution. When you play Game B
-        alone, the Markov chain settles into a steady state that overweights
-        state 0 — the "divisible by 3" state where you face the bad coin.
-        In my simulation, players spend about 38% of their time in state 0,
-        well above the 33% you'd get from a uniform distribution. That's
-        enough to make the overall expected value negative.
+        Everything hinges on your capital mod 3. If you only play Game B,
+        your capital mod 3 behaves like a Markov chain, and that chain
+        settles into a long-run distribution that favours state 0 (the
+        divisible-by-3 state with the bad coin). In my runs, players spent
+        about 38% of their time there. A uniform split would be 33%, and
+        that five-point difference is what makes B a losing game.
       </p>
 
       <p>
-        Game A acts as a ratchet. It doesn't depend on capital mod 3, so
-        playing it disrupts Game B's unfavourable equilibrium. It
-        redistributes your capital across the mod-3 states, pushing you
-        away from state 0 and onto the good coin more often:
+        Game A ignores your capital mod 3, so mixing it in breaks up that
+        pattern. Each A round nudges you to a neighbouring state more or less
+        at random, which pulls you out of state 0 and puts you back on the
+        good coin more often:
       </p>
 
       <img src="../../assets/state_distribution.png" alt="Mod-3 state distribution: Game B alone vs combined vs theoretical uniform"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
-        Game B alone: state 0 at 38.4%. Combined: drops to 34.5%, closer
-        to the theoretical 33.3%. That's a small shift, but it's enough to
-        flip the expected value from negative to positive.
+        With B alone, you're in state 0 38.4% of the time. With the mix,
+        it's 34.5%, closer to the uniform 33.3%. I was surprised how small
+        that change is. It's still enough to turn a losing game into a
+        winning one.
       </p>
 
-      <h2>How robust is it?</h2>
+      <h2>Does it depend on the exact numbers?</h2>
 
       <p>
-        Is this sensitive to the exact parameter values? Here's a sweep
-        across (p<sub>2</sub>,&nbsp;p<sub>3</sub>) with p<sub>1</sub>
-        fixed at 0.495. The dark region is where the combined strategy
-        wins:
+        I wanted to know if this only works for one lucky set of
+        probabilities, so I swept over p<sub>2</sub> and p<sub>3</sub>
+        with p<sub>1</sub> fixed at 0.495. The dark region is where the
+        combined strategy makes money:
       </p>
 
       <img src="../../assets/parameter_sweep.png" alt="Parameter sweep heatmap showing where the combined strategy wins"
         style="width:100%;margin:24px 0;border:1px solid var(--dim);">
 
       <p>
-        There's a reasonable region above the contour line where the
-        paradox holds. Not a knife-edge.
+        The paradox holds across a decent chunk of the space above the
+        contour line, so you don't need to tune the values precisely to
+        see it.
       </p>
 
       <h2>The code</h2>
 
       <p>
-        The core logic fits in a single function:
+        The game logic is one short function:
       </p>
 
 <pre><code>def play_round(capital, game, rng, p1=0.495, p2=0.095, p3=0.745):
@@ -127,32 +133,35 @@ tags: [python, monte-carlo, statistics]
             return 1 if rng.random() < p3 else -1</code></pre>
 
       <p>
-        Game A checks one probability. Game B checks your capital mod 3 and
-        picks the corresponding coin. The full simulation with all three
-        figures is in <a href="code.py" style="color:var(--fg)">code.py</a>.
+        Game A uses one fixed probability. Game B looks at your capital mod 3
+        and picks a coin. The full simulation, including the code for the
+        three figures, is in <a href="code.py" style="color:var(--fg)">code.py</a>.
       </p>
 
-      <h2>Takeaway</h2>
+      <h2>So what?</h2>
 
       <p>
-        The point is that combining stochastic processes is not the same as
-        combining their expected values. When the dynamics are
-        state-dependent, mixing strategies can shift the stationary
-        distribution in ways that matter. Here the random switching disrupts
-        an unfavourable equilibrium, and that's enough.
-      </p>
-
-      <p>
-        The same kind of thing shows up elsewhere. In biology, fluctuating
-        environments can benefit populations that would decline in either
-        environment alone. In trading, there's <em>Shannon's demon</em>: a
-        portfolio rebalanced daily between cash and a volatile stock can
-        grow even when the stock has zero expected return. The rebalancing,
-        like the game-switching here, profits from the structure of the
-        fluctuations rather than their direction.
+        The lesson I take from this is that you can't predict how a mix of
+        random processes will behave by averaging their expected values.
+        When the odds depend on the state you're in, switching between
+        strategies changes how much time you spend in each state, and that
+        can matter more than the odds themselves. Here, random switching
+        knocks Game B out of a bad equilibrium, and that's all it takes.
       </p>
 
       <p>
-        Anyway — next time your friend finds two losing games at the casino,
-        maybe check their modular arithmetic before staging an intervention.
+        Similar effects turn up in other places. In biology, a population can
+        grow in an environment that keeps switching between two conditions,
+        even if it would shrink under either one alone. In finance there's
+        <em>Shannon's demon</em>. If you split your money between cash and a
+        volatile stock and rebalance every day, the portfolio can grow even
+        when the stock's expected return is zero. As with the game switching,
+        the profit comes from how the price moves around, not which way it's
+        heading.
+      </p>
+
+      <p>
+        So if your friend ever turns up with two losing games and a plan,
+        it's worth checking his modular arithmetic before you call his
+        family.
       </p>
