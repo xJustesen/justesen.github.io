@@ -13,6 +13,7 @@ Requirements:
     numpy, matplotlib, scipy
 """
 
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -20,48 +21,14 @@ import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 from scipy import stats
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from siteplot import BG, CELL_LO, CELL_MID, DIM, FG, FIG_DIR, LINK, PEAK, PROMPT, save  # noqa: E402
+
 # ── Config ──────────────────────────────────────────────────
 RNG = np.random.default_rng(42)
 N_SAMPLES = 50_000
-FIG_DIR = Path(__file__).resolve().parents[2] / "assets"
 
-# Plot style: the site's dark terminal palette (styles.css :root) and typeface
-plt.rcParams.update(
-    {
-        "font.family": ["IBM Plex Mono", "DejaVu Sans Mono"],
-        "font.size": 8,
-        "text.color": "#c9d1d9",
-        "figure.facecolor": "#0e1116",
-        "savefig.facecolor": "#0e1116",
-        "axes.facecolor": "#0e1116",
-        "axes.edgecolor": "#2d333b",
-        "axes.linewidth": 0.8,
-        "axes.labelcolor": "#7d8590",
-        "axes.labelsize": 7,
-        "axes.titlesize": 8,
-        "axes.titlecolor": "#c9d1d9",
-        "axes.titlelocation": "left",
-        "axes.titlepad": 10,
-        "xtick.color": "#2d333b",
-        "ytick.color": "#2d333b",
-        "xtick.labelcolor": "#7d8590",
-        "ytick.labelcolor": "#7d8590",
-        "xtick.labelsize": 7,
-        "ytick.labelsize": 7,
-        "xtick.major.width": 0.8,
-        "ytick.major.width": 0.8,
-        "xtick.major.size": 3,
-        "ytick.major.size": 3,
-        "legend.frameon": False,
-        "legend.fontsize": 7,
-        "legend.labelcolor": "#8b949e",
-        "lines.linewidth": 1.2,
-        "axes.grid": False,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-    }
-)
-DENSITY_CMAP = LinearSegmentedColormap.from_list("density", ["#0e1116", "#1f4d33", "#3fb950", "#7ee787"])
+DENSITY_CMAP = LinearSegmentedColormap.from_list("density", [BG, CELL_LO, CELL_MID, PROMPT])
 
 
 # ── Helpers ─────────────────────────────────────────────────
@@ -100,7 +67,7 @@ def convergence_curve(estimates: np.ndarray) -> np.ndarray:
 # ── Distribution definitions ───────────────────────────────
 class UniformSampler:
     name = "Uniform"
-    color = "#c9d1d9"
+    color = FG
     ls = "-"
 
     def sample(self, n, rng):
@@ -113,7 +80,7 @@ class UniformSampler:
 
 class GaussianSampler:
     name = "Gaussian (μ=0.5, σ=0.3)"
-    color = "#79c0ff"
+    color = LINK
     ls = "--"
 
     def __init__(self, mu=0.5, sigma=0.3):
@@ -133,7 +100,7 @@ class ShotgunSampler:
     """Clustered pellets: a Gaussian spread around a random aim point per shot."""
 
     name = "Shotgun (clustered)"
-    color = "#7ee787"
+    color = PROMPT
     ls = "-."
 
     def __init__(self, pellets_per_shot=200, shot_sigma=0.2):
@@ -167,7 +134,7 @@ class ShotgunSampler:
 
 class BetaSampler:
     name = "Beta (α=2, β=5)"
-    color = "#f2cc60"
+    color = PEAK
     ls = ":"
 
     def __init__(self, a=2, b=5):
@@ -224,11 +191,11 @@ for ax, sampler in zip(axes, samplers):
     xv, yv = x[vis][:5000], y[vis][:5000]
     inside = in_quarter_circle(xv, yv).astype(bool)
 
-    ax.scatter(xv[inside], yv[inside], s=1.5, c="#7ee787", alpha=0.6, linewidths=0)
-    ax.scatter(xv[~inside], yv[~inside], s=1.5, c="#7d8590", alpha=0.35, linewidths=0)
+    ax.scatter(xv[inside], yv[inside], s=1.5, c=PROMPT, alpha=0.6, linewidths=0)
+    ax.scatter(xv[~inside], yv[~inside], s=1.5, c=DIM, alpha=0.35, linewidths=0)
 
     theta = np.linspace(0, np.pi / 2, 100)
-    ax.plot(np.cos(theta), np.sin(theta), c="#c9d1d9", lw=0.8)
+    ax.plot(np.cos(theta), np.sin(theta), c=FG, lw=0.8)
     ax.set_xlim(-0.05, 1.05)
     ax.set_ylim(-0.05, 1.05)
     ax.set_aspect("equal")
@@ -237,10 +204,7 @@ for ax, sampler in zip(axes, samplers):
     ax.set_yticks([0, 0.5, 1])
 
 fig.suptitle("sample distributions · green = inside the quarter circle", x=0.01, ha="left", y=1.02)
-fig.tight_layout()
-fig.savefig(f"{FIG_DIR}/scatter_comparison.png", dpi=180, bbox_inches="tight")
-plt.close(fig)
-print(f"Saved {FIG_DIR}/scatter_comparison.png")
+save(fig, 'scatter_comparison.png')
 
 
 # ── Figure 2: Convergence curves ───────────────────────────
@@ -259,17 +223,14 @@ for sampler in samplers:
         ls=s.ls,
     )
 
-ax.axhline(np.pi, color="#7d8590", lw=0.6, ls=":")
+ax.axhline(np.pi, color=DIM, lw=0.6, ls=":")
 ax.set_xlabel("samples")
 ax.set_ylabel("running π estimate")
 ax.set_xscale("log")
 ax.set_ylim(2.5, 4.0)
 ax.legend(loc="upper right")
 ax.set_title("convergence to π by sampling strategy")
-fig.tight_layout()
-fig.savefig(f"{FIG_DIR}/convergence.png", dpi=180, bbox_inches="tight")
-plt.close(fig)
-print(f"Saved {FIG_DIR}/convergence.png")
+save(fig, 'convergence.png')
 
 
 # ── Figure 3: Importance weights heatmap (Gaussian case) ───
@@ -296,9 +257,9 @@ vis = (x >= 0) & (x <= 1) & (y >= 0) & (y <= 1)
 xv, yv = x[vis][:3000], y[vis][:3000]
 wv = 1.0 / (gauss.dist.pdf(xv) * gauss.dist.pdf(yv))
 wv_norm = wv / wv.max()
-axes[2].scatter(xv, yv, s=wv_norm * 8, c="#7ee787", alpha=0.35, linewidths=0)
+axes[2].scatter(xv, yv, s=wv_norm * 8, c=PROMPT, alpha=0.35, linewidths=0)
 theta = np.linspace(0, np.pi / 2, 100)
-axes[2].plot(np.cos(theta), np.sin(theta), c="#c9d1d9", lw=0.8)
+axes[2].plot(np.cos(theta), np.sin(theta), c=FG, lw=0.8)
 axes[2].set_title("weighted samples (size ∝ weight)")
 axes[2].set_aspect("equal")
 axes[2].set_xlim(-0.05, 1.05)
@@ -308,9 +269,6 @@ for ax in axes:
     ax.set_xticks([0, 0.5, 1])
     ax.set_yticks([0, 0.5, 1])
 
-fig.tight_layout()
-fig.savefig(f"{FIG_DIR}/importance_weights.png", dpi=180, bbox_inches="tight")
-plt.close(fig)
-print(f"Saved {FIG_DIR}/importance_weights.png")
+save(fig, 'importance_weights.png')
 
 print(f"\nDone. All figures saved to {FIG_DIR}")

@@ -11,15 +11,18 @@ Usage:
     uv run --with numpy --with matplotlib --with scipy python code.py
 """
 
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import binom, norm
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from siteplot import DIM, FG, LINK, PEAK, PROMPT, save  # noqa: E402
+
 # ── Config ──────────────────────────────────────────────────
 RNG = np.random.default_rng(7)
-FIG_DIR = Path(__file__).resolve().parents[2] / 'assets'
 
 N_FLIPS = 100          # flips per coin
 P_BIASED = 0.6         # heads probability of the biased coin
@@ -30,43 +33,7 @@ N_STRATEGIES = 1_000   # strategy variants in the backtest sweep
 N_DAYS = 252           # one year of daily returns per backtest
 N_SWEEPS = 2_000       # repetitions of the sweep
 
-# Plot style: the site's dark terminal palette (styles.css :root) and typeface
-plt.rcParams.update(
-    {
-        'font.family': ['IBM Plex Mono', 'DejaVu Sans Mono'],
-        'font.size': 8,
-        'text.color': '#c9d1d9',
-        'figure.facecolor': '#0e1116',
-        'savefig.facecolor': '#0e1116',
-        'axes.facecolor': '#0e1116',
-        'axes.edgecolor': '#2d333b',
-        'axes.linewidth': 0.8,
-        'axes.labelcolor': '#7d8590',
-        'axes.labelsize': 7,
-        'axes.titlesize': 8,
-        'axes.titlecolor': '#c9d1d9',
-        'axes.titlelocation': 'left',
-        'axes.titlepad': 10,
-        'xtick.color': '#2d333b',
-        'ytick.color': '#2d333b',
-        'xtick.labelcolor': '#7d8590',
-        'ytick.labelcolor': '#7d8590',
-        'xtick.labelsize': 7,
-        'ytick.labelsize': 7,
-        'xtick.major.width': 0.8,
-        'ytick.major.width': 0.8,
-        'xtick.major.size': 3,
-        'ytick.major.size': 3,
-        'legend.frameon': False,
-        'legend.fontsize': 7,
-        'legend.labelcolor': '#8b949e',
-        'lines.linewidth': 1.2,
-        'axes.grid': False,
-        'axes.spines.top': False,
-        'axes.spines.right': False,
-    }
-)
-FAIR, BIASED, BEST = '#79c0ff', '#7ee787', '#f2cc60'
+FAIR, BIASED, BEST = LINK, PROMPT, PEAK
 
 
 # ── Core functions ──────────────────────────────────────────
@@ -102,13 +69,6 @@ def expected_max_normal(n):
     return (1 - gamma) * norm.ppf(1 - 1 / n) + gamma * norm.ppf(1 - 1 / (n * np.e))
 
 
-def save(fig, name):
-    """Save a figure to the assets directory. :param fig: plt.Figure :param name: str :rtype: None"""
-    fig.tight_layout()
-    fig.savefig(FIG_DIR / name, dpi=180, bbox_inches='tight')
-    plt.close(fig)
-    print(f'Saved {FIG_DIR / name}')
-
 
 # ── Figure 1: one coin ──────────────────────────────────────
 def figure_1_one_coin():
@@ -120,8 +80,8 @@ def figure_1_one_coin():
     for p, color, label in [(0.5, FAIR, 'fair coin (p = 0.5)'), (P_BIASED, BIASED, f'biased coin (p = {P_BIASED})')]:
         ax.stairs(binom.pmf(k, N_FLIPS, p), np.append(k, k[-1] + 1) - 0.5, color=color, fill=True, alpha=0.15)
         ax.stairs(binom.pmf(k, N_FLIPS, p), np.append(k, k[-1] + 1) - 0.5, color=color, label=label)
-    ax.axvline(critical - 0.5, color='#c9d1d9', lw=0.8, ls=':')
-    ax.text(critical + 13, 0.075, f'≥ {critical} heads:\n"biased" at 5%', color='#c9d1d9')
+    ax.axvline(critical - 0.5, color=FG, lw=0.8, ls=':')
+    ax.text(critical + 13, 0.075, f'≥ {critical} heads:\n"biased" at 5%', color=FG)
     ax.set_xlabel(f'heads in {N_FLIPS} flips')
     ax.set_ylabel('probability')
     ax.set_title('one coin · fair or biased?')
@@ -155,7 +115,7 @@ def figure_2_thousand_coins(rng):
     flips = np.array([50, 100, 200, 300, 500, 750, 1_000, 2_000])
     found = [p_found(n, 2_000, rng) for n in flips]
     ax2.plot(flips, found, 'o-', color=BIASED, markersize=4)
-    ax2.axhline(1 / N_COINS, color='#7d8590', lw=0.6, ls=':')
+    ax2.axhline(1 / N_COINS, color=DIM, lw=0.6, ls=':')
     ax2.set_xscale('log')
     ax2.set_ylim(-0.03, 1.03)
     ax2.set_xlabel('flips per coin')
@@ -181,7 +141,7 @@ def figure_3_backtests(rng):
     bins = np.linspace(-4, 6, 81)
     ax1.hist(best_out, bins=bins, density=True, color=FAIR, alpha=0.7, label='same strategy, next year')
     ax1.hist(best_in, bins=bins, density=True, color=BEST, alpha=0.7, label='best backtest of 1,000')
-    ax1.axvline(0, color='#7d8590', lw=0.6, ls=':')
+    ax1.axvline(0, color=DIM, lw=0.6, ls=':')
     ax1.set_xlabel('annualised Sharpe ratio')
     ax1.set_ylabel('density')
     ax1.set_title('1,000 strategies, zero edge · pick the best')
@@ -190,7 +150,7 @@ def figure_3_backtests(rng):
     n_trials = np.unique(np.logspace(0, 4, 40).astype(int))
     sims = [rng.standard_normal((4_000, n)).max(axis=1).mean() if n > 1 else 0.0 for n in n_trials]
     ax2.plot(n_trials, sims, 'o', color=BEST, markersize=3, label='simulation')
-    ax2.plot(n_trials[1:], expected_max_normal(n_trials[1:]), color='#c9d1d9', lw=0.8, label='approximation')
+    ax2.plot(n_trials[1:], expected_max_normal(n_trials[1:]), color=FG, lw=0.8, label='approximation')
     ax2.set_xscale('log')
     ax2.set_xlabel('strategies tried')
     ax2.set_ylabel('expected best Sharpe (1-year backtest)')
