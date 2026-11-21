@@ -9,13 +9,14 @@ if (!histEl) return;
 // ── Constants ──────────────────────────────────────────────
 const COL_COUNT = 70;
 const MAX_ROWS = 14;
-const SPRING_K = 0.003;    // stiffness — low = more lag
-const SPRING_DAMP = 0.92;  // damping — high = less overshoot
-const SPRING_VEL_CAP = 0.004;
+const SPRING_K = 0.015;    // stiffness — low = more lag
+const SPRING_DAMP = 0.80;  // damping — high = more overshoot
+const SPRING_VEL_CAP = 0.025;
 
 // ── DOM references ─────────────────────────────────────────
 const section = document.getElementById('distSection');
 const navEl = document.getElementById('nav');
+const statsEl = document.getElementById('stats');
 
 // ── Build histogram columns ────────────────────────────────
 const cols = [];
@@ -36,6 +37,7 @@ let isHovering = false;
 let targetCenter = 0.5;
 let springCenter = 0.5;
 let springVel = 0;
+let frame = 0;
 
 // ── Math helpers ───────────────────────────────────────────
 function gaussian(x, mean, sigma) {
@@ -69,7 +71,7 @@ function updateSpring() {
     springVel *= SPRING_DAMP;
     springVel = clamp(springVel, -SPRING_VEL_CAP, SPRING_VEL_CAP);
   } else {
-    const force = (0.5 - springCenter) * 0.004;
+    const force = (0.5 - springCenter) * 0.012;
     springVel += force;
     springVel *= SPRING_DAMP;
     tickIdle();
@@ -84,7 +86,7 @@ function computeActiveBar(i, speed) {
   const movingRight = springVel > 0;
 
   // Asymmetric sigma: trailing side stretches, leading side tightens
-  const stretchFactor = Math.min(speed * 60, 0.4);
+  const stretchFactor = Math.min(speed * 15, 0.4);
   let sigmaLeft, sigmaRight;
 
   if (movingRight) {
@@ -112,12 +114,12 @@ function computeActiveBar(i, speed) {
 
   // Per-bar lerp: bars closer to center converge faster
   const proximity = 1 - Math.min(Math.abs(dist) * 3, 1);
-  const barLerp = clamp(0.02 + proximity * 0.05 + speed * 4, 0, 0.2);
+  const barLerp = clamp(0.1 + proximity * 0.15 + speed * 4, 0, 0.4);
   display[i] += (targetVal - display[i]) * barLerp;
 }
 
 function computeIdleBar(i) {
-  display[i] += (idleValues[i] - display[i]) * 0.05;
+  display[i] += (idleValues[i] - display[i]) * 0.12;
   activeNoise[i] *= 0.95;
 }
 
@@ -131,16 +133,35 @@ function updateColumn(i) {
 
   if (diff > 0) {
     for (let r = 0; r < diff; r++) {
+      const height = (cols[i].count + r) / MAX_ROWS;
       const cell = document.createElement('div');
-      cell.className = 'cell';
-      col.appendChild(cell);
+      cell.className = height > 0.75 ? 'cell hi' : height > 0.35 ? 'cell mid' : 'cell';
+      col.prepend(cell);
     }
   } else {
     for (let r = 0; r < -diff; r++) {
-      if (col.lastChild) col.removeChild(col.lastChild);
+      if (col.firstChild) col.removeChild(col.firstChild);
     }
   }
   cols[i].count = rows;
+}
+
+// Bins span -3..+3, matching the axis labels under the histogram.
+function updateStats() {
+  let n = 0, sum = 0, sumSq = 0;
+  for (let i = 0; i < COL_COUNT; i++) {
+    const x = -3 + (6 * i) / (COL_COUNT - 1);
+    const count = cols[i].count;
+    n += count;
+    sum += count * x;
+    sumSq += count * x * x;
+  }
+  const mean = n ? sum / n : 0;
+  const sigma = n ? Math.sqrt(Math.max(sumSq / n - mean * mean, 0)) : 0;
+  const [nEl, meanEl, sigmaEl] = statsEl.querySelectorAll('span');
+  nEl.textContent = n;
+  meanEl.textContent = mean.toFixed(2);
+  sigmaEl.textContent = sigma.toFixed(2);
 }
 
 // ── Main render loop ───────────────────────────────────────
@@ -157,6 +178,8 @@ function render() {
     }
     updateColumn(i);
   }
+
+  if (++frame % 10 === 0) updateStats();
 
   requestAnimationFrame(render);
 }
