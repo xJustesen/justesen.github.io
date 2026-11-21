@@ -30,13 +30,18 @@ fi
 DATE="$(date +%Y' · '%m' · '%d)"
 ISO_DATE="$(date +%Y-%m-%d)"
 
-# Front matter tag list: "a, b" -> [a, b]
+YAML_TITLE="${TITLE//\\/\\\\}"
+YAML_TITLE="${YAML_TITLE//\"/\\\"}"
+
+# Front matter tag list "a, b" -> [a, b] and the log.html tag spans
 FM_TAGS=""
+TAG_SPANS=""
 if [[ -n "$TAGS" ]]; then
   IFS=',' read -ra TAG_ARRAY <<< "$TAGS"
   for tag in "${TAG_ARRAY[@]}"; do
     tag="$(echo "$tag" | xargs)"  # trim whitespace
     FM_TAGS="${FM_TAGS:+$FM_TAGS, }$tag"
+    TAG_SPANS+="        <span class=\"log-tag\">$tag</span>"$'\n'
   done
 fi
 
@@ -46,7 +51,7 @@ mkdir -p "$POST_DIR"
 cat > "$POST_DIR/post.html" << POSTEOF
 ---
 layout: post
-title: "$TITLE"
+title: "$YAML_TITLE"
 date: $ISO_DATE
 nav: log
 tags: [$FM_TAGS]
@@ -59,24 +64,28 @@ tags: [$FM_TAGS]
       </p>
 POSTEOF
 
-# Build the new log entry
-LOG_ENTRY="\\
-    <div class=\"log-entry\">\\
-      <div class=\"log-date\">$DATE</div>\\
-      <div class=\"log-title\"><a href=\"posts/$SLUG/post.html\">$TITLE</a></div>\\
-      <div class=\"log-excerpt\">\\
-        TODO: Write a short excerpt.\\
-      </div>\\
-      <div class=\"log-tags\">\\
-$(IFS=',' read -ra TAG_ARRAY <<< "$TAGS"; for tag in "${TAG_ARRAY[@]}"; do tag="$(echo "$tag" | xargs)"; echo "        <span class=\"log-tag\">$tag</span>\\"; done)
-      </div>\\
+LOG_ENTRY="
+    <div class=\"log-entry\">
+      <div class=\"log-date\">$DATE</div>
+      <div class=\"log-title\"><a href=\"posts/$SLUG/post.html\">$TITLE</a></div>
+      <div class=\"log-excerpt\">
+        TODO: Write a short excerpt.
+      </div>
+      <div class=\"log-tags\">
+${TAG_SPANS}      </div>
     </div>"
 
-# Insert after the section-label line in log.html
-sed -i '' "/^    <div class=\"section-label\">log<\/div>$/a\\
-\\
-$LOG_ENTRY
-" "$REPO_ROOT/log.html"
+# Insert the entry after the section-label line in log.html
+LOG="$REPO_ROOT/log.html"
+LABEL='    <div class="section-label">log</div>'
+TMP="$(mktemp)"
+while IFS= read -r line || [[ -n "$line" ]]; do
+  printf '%s\n' "$line"
+  if [[ "$line" == "$LABEL" ]]; then
+    printf '%s\n' "$LOG_ENTRY"
+  fi
+done < "$LOG" > "$TMP"
+cat "$TMP" > "$LOG" && rm "$TMP"
 
 echo "Created posts/$SLUG/post.html"
 echo "Added entry to log.html"
