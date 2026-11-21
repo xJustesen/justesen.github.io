@@ -17,6 +17,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import LinearSegmentedColormap
 from scipy import stats
 
 # ── Config ──────────────────────────────────────────────────
@@ -24,23 +25,43 @@ RNG = np.random.default_rng(42)
 N_SAMPLES = 50_000
 FIG_DIR = Path(__file__).resolve().parents[2] / "assets"
 
-# Plot style — monochrome, minimal, matches the site
+# Plot style: the site's dark terminal palette (styles.css :root) and typeface
 plt.rcParams.update(
     {
-        "font.family": "monospace",
-        "font.size": 9,
-        "axes.facecolor": "#f5f5f5",
-        "figure.facecolor": "#f5f5f5",
-        "axes.edgecolor": "#111",
-        "axes.labelcolor": "#111",
-        "xtick.color": "#555",
-        "ytick.color": "#555",
-        "text.color": "#111",
+        "font.family": ["IBM Plex Mono", "DejaVu Sans Mono"],
+        "font.size": 8,
+        "text.color": "#c9d1d9",
+        "figure.facecolor": "#0e1116",
+        "savefig.facecolor": "#0e1116",
+        "axes.facecolor": "#0e1116",
+        "axes.edgecolor": "#2d333b",
+        "axes.linewidth": 0.8,
+        "axes.labelcolor": "#7d8590",
+        "axes.labelsize": 7,
+        "axes.titlesize": 8,
+        "axes.titlecolor": "#c9d1d9",
+        "axes.titlelocation": "left",
+        "axes.titlepad": 10,
+        "xtick.color": "#2d333b",
+        "ytick.color": "#2d333b",
+        "xtick.labelcolor": "#7d8590",
+        "ytick.labelcolor": "#7d8590",
+        "xtick.labelsize": 7,
+        "ytick.labelsize": 7,
+        "xtick.major.width": 0.8,
+        "ytick.major.width": 0.8,
+        "xtick.major.size": 3,
+        "ytick.major.size": 3,
+        "legend.frameon": False,
+        "legend.fontsize": 7,
+        "legend.labelcolor": "#8b949e",
+        "lines.linewidth": 1.2,
         "axes.grid": False,
         "axes.spines.top": False,
         "axes.spines.right": False,
     }
 )
+DENSITY_CMAP = LinearSegmentedColormap.from_list("density", ["#0e1116", "#1f4d33", "#3fb950", "#7ee787"])
 
 
 # ── Helpers ─────────────────────────────────────────────────
@@ -79,7 +100,7 @@ def convergence_curve(estimates: np.ndarray) -> np.ndarray:
 # ── Distribution definitions ───────────────────────────────
 class UniformSampler:
     name = "Uniform"
-    color = "#111"
+    color = "#c9d1d9"
     ls = "-"
 
     def sample(self, n, rng):
@@ -92,7 +113,7 @@ class UniformSampler:
 
 class GaussianSampler:
     name = "Gaussian (μ=0.5, σ=0.3)"
-    color = "#666"
+    color = "#79c0ff"
     ls = "--"
 
     def __init__(self, mu=0.5, sigma=0.3):
@@ -112,7 +133,7 @@ class ShotgunSampler:
     """Clustered pellets: a Gaussian spread around a random aim point per shot."""
 
     name = "Shotgun (clustered)"
-    color = "#999"
+    color = "#7ee787"
     ls = "-."
 
     def __init__(self, pellets_per_shot=200, shot_sigma=0.2):
@@ -146,7 +167,7 @@ class ShotgunSampler:
 
 class BetaSampler:
     name = "Beta (α=2, β=5)"
-    color = "#bbb"
+    color = "#f2cc60"
     ls = ":"
 
     def __init__(self, a=2, b=5):
@@ -203,19 +224,19 @@ for ax, sampler in zip(axes, samplers):
     xv, yv = x[vis][:5000], y[vis][:5000]
     inside = in_quarter_circle(xv, yv).astype(bool)
 
-    ax.scatter(xv[inside], yv[inside], s=0.5, c="#111", alpha=0.3, linewidths=0)
-    ax.scatter(xv[~inside], yv[~inside], s=0.5, c="#aaa", alpha=0.3, linewidths=0)
+    ax.scatter(xv[inside], yv[inside], s=1.5, c="#7ee787", alpha=0.6, linewidths=0)
+    ax.scatter(xv[~inside], yv[~inside], s=1.5, c="#7d8590", alpha=0.35, linewidths=0)
 
     theta = np.linspace(0, np.pi / 2, 100)
-    ax.plot(np.cos(theta), np.sin(theta), c="#111", lw=0.8)
+    ax.plot(np.cos(theta), np.sin(theta), c="#c9d1d9", lw=0.8)
     ax.set_xlim(-0.05, 1.05)
     ax.set_ylim(-0.05, 1.05)
     ax.set_aspect("equal")
-    ax.set_title(sampler.name, fontsize=8, pad=8)
+    ax.set_title(sampler.name.lower())
     ax.set_xticks([0, 0.5, 1])
     ax.set_yticks([0, 0.5, 1])
 
-fig.suptitle("Sample distributions — dark = inside quarter circle", fontsize=9, y=1.02)
+fig.suptitle("sample distributions · green = inside the quarter circle", x=0.01, ha="left", y=1.02)
 fig.tight_layout()
 fig.savefig(f"{FIG_DIR}/scatter_comparison.png", dpi=180, bbox_inches="tight")
 plt.close(fig)
@@ -233,19 +254,18 @@ for sampler in samplers:
     ax.plot(
         np.arange(1, n_plot + 1),
         curve[:n_plot],
-        label=f'{s.name} (π ≈ {r["pi"]:.4f})',
+        label=f'{s.name.lower()} (π ≈ {r["pi"]:.4f})',
         color=s.color,
         ls=s.ls,
-        lw=1.2,
     )
 
-ax.axhline(np.pi, color="#111", lw=0.6, ls=":", alpha=0.4)
+ax.axhline(np.pi, color="#7d8590", lw=0.6, ls=":")
 ax.set_xlabel("samples")
 ax.set_ylabel("running π estimate")
 ax.set_xscale("log")
 ax.set_ylim(2.5, 4.0)
-ax.legend(fontsize=7, frameon=False, loc="upper right")
-ax.set_title("Convergence to π across sampling strategies", fontsize=9)
+ax.legend(loc="upper right")
+ax.set_title("convergence to π by sampling strategy")
 fig.tight_layout()
 fig.savefig(f"{FIG_DIR}/convergence.png", dpi=180, bbox_inches="tight")
 plt.close(fig)
@@ -260,14 +280,14 @@ gy = np.linspace(0, 1, 100)
 GX, GY = np.meshgrid(gx, gy)
 gauss = GaussianSampler()
 Z_q = gauss.dist.pdf(GX) * gauss.dist.pdf(GY)
-axes[0].contourf(GX, GY, Z_q, levels=20, cmap="Greys")
-axes[0].set_title("q(x,y): proposal density", fontsize=8)
+axes[0].contourf(GX, GY, Z_q, levels=20, cmap=DENSITY_CMAP)
+axes[0].set_title("q(x,y): proposal density")
 axes[0].set_aspect("equal")
 
 Z_f = np.ones_like(GX)
 Z_w = Z_f / Z_q
-axes[1].contourf(GX, GY, Z_w, levels=20, cmap="Greys")
-axes[1].set_title("f(x,y) / q(x,y): importance weights", fontsize=8)
+axes[1].contourf(GX, GY, Z_w, levels=20, cmap=DENSITY_CMAP)
+axes[1].set_title("f(x,y) / q(x,y): importance weights")
 axes[1].set_aspect("equal")
 
 r = results[gauss.name]
@@ -276,10 +296,10 @@ vis = (x >= 0) & (x <= 1) & (y >= 0) & (y <= 1)
 xv, yv = x[vis][:3000], y[vis][:3000]
 wv = 1.0 / (gauss.dist.pdf(xv) * gauss.dist.pdf(yv))
 wv_norm = wv / wv.max()
-axes[2].scatter(xv, yv, s=wv_norm * 8, c="#111", alpha=0.25, linewidths=0)
+axes[2].scatter(xv, yv, s=wv_norm * 8, c="#7ee787", alpha=0.35, linewidths=0)
 theta = np.linspace(0, np.pi / 2, 100)
-axes[2].plot(np.cos(theta), np.sin(theta), c="#111", lw=0.8)
-axes[2].set_title("weighted samples (size ∝ weight)", fontsize=8)
+axes[2].plot(np.cos(theta), np.sin(theta), c="#c9d1d9", lw=0.8)
+axes[2].set_title("weighted samples (size ∝ weight)")
 axes[2].set_aspect("equal")
 axes[2].set_xlim(-0.05, 1.05)
 axes[2].set_ylim(-0.05, 1.05)
