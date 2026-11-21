@@ -120,7 +120,10 @@ tags: [monte-carlo, statistics, python]
       <p>
         They all end up at π. Uniform is the smoothest, since nothing needs
         correcting. Gaussian and Beta get there too but wobble a bit more,
-        because the weights add variance. The shotgun is the noisiest of the
+        because the weights add variance. Beta is the risky one: its density
+        drops to zero at the edges of the square, so the weights there have
+        no upper bound and its variance is infinite. With another seed it can
+        land well away from π. The shotgun is the noisiest of the
         four. Its density q(x) has to be estimated from the data, so there's
         uncertainty in the weights on top of the usual sampling noise.
       </p>
@@ -184,9 +187,11 @@ tags: [monte-carlo, statistics, python]
       <p>
         The shotgun was the hardest of the four because there's no formula
         for its density. I had to estimate q(x) from the pellet holes
-        themselves, using half the samples to build a histogram and the
-        other half to compute π, as in the paper. The result is noisy, but
-        it still converges.
+        themselves with a 2D histogram, and then rescale it so that the
+        weights inside the square average to the square's area. Without
+        the rescale the estimate came out several percent off, because the
+        histogram only sees the pellets that hit the square. The result is
+        noisy, but it still converges.
       </p>
 
       <p>

@@ -103,7 +103,7 @@ tags: [python, monte-carlo, statistics]
       <p>
         I wanted to know if this only works for one lucky set of
         probabilities, so I swept over p<sub>2</sub> and p<sub>3</sub>
-        with p<sub>1</sub> fixed at 0.495. The dark region is where the
+        with p<sub>1</sub> fixed at 0.495. The green region is where the
         combined strategy makes money:
       </p>
 
@@ -122,15 +122,21 @@ tags: [python, monte-carlo, statistics]
         The game logic is one short function:
       </p>
 
-<pre><code>def play_round(capital, game, rng, p1=0.495, p2=0.095, p3=0.745):
-    """Play one round. Returns +1 (win) or -1 (loss)."""
-    if game == 'A':
-        return 1 if rng.random() < p1 else -1
-    else:  # Game B
-        if capital % 3 == 0:
-            return 1 if rng.random() < p2 else -1
+<pre><code>def simulate(strategy, n_rounds, n_players, rng, p1=0.495, p2=0.095, p3=0.745):
+    capitals = np.zeros((n_players, n_rounds + 1), dtype=int)
+    cap = np.zeros(n_players, dtype=int)
+
+    for t in range(n_rounds):
+        if strategy == 'AB':
+            play_a = rng.random(n_players) &lt; 0.5
         else:
-            return 1 if rng.random() < p3 else -1</code></pre>
+            play_a = np.full(n_players, strategy == 'A')
+        p_b = np.where(cap % 3 == 0, p2, p3)
+        p_win = np.where(play_a, p1, p_b)
+        cap += np.where(rng.random(n_players) &lt; p_win, 1, -1)
+        capitals[:, t + 1] = cap
+
+    return capitals</code></pre>
 
       <p>
         Game A uses one fixed probability. Game B looks at your capital mod 3
