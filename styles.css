@@ -443,10 +443,15 @@ body::before {
   color: var(--dim);
 }
 
-.post-body p {
+.post-body p,
+.post-body li {
   font-size: 11px;
   line-height: 1.8;
   margin-bottom: 14px;
+}
+
+.post-body ul {
+  padding-left: 18px;
 }
 
 .post-body code {

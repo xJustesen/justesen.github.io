@@ -1,0 +1,186 @@
+---
+layout: post
+title: "Everyone's Backtests Are Overfitted (Except Mine)"
+date: 2026-11-21
+nav: log
+tags: [python, monte-carlo, statistics, trading]
+---
+
+      <h2>One coin</h2>
+
+      <p>
+        I hand you a coin and tell you it might be biased. You flip it 100
+        times and get 61 heads. Is it biased?
+      </p>
+
+      <p>
+        This is a textbook hypothesis test. If the coin is fair, the number
+        of heads follows a binomial distribution centred on 50. Getting 59
+        or more heads happens only 4.4% of the time, so with the usual 5%
+        threshold you call any coin with 59+ heads biased. Sixty-one heads:
+        biased.
+      </p>
+
+      <img src="../../assets/mc_one_coin.png" alt="Distribution of heads in 100 flips for a fair coin and a coin with p = 0.6, with the 5% rejection line at 59 heads"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        The test isn't perfect. A fair coin crosses the line 4.4% of the
+        time, and a coin with p&nbsp;=&nbsp;0.6 only crosses it 62% of the
+        time. But for one coin it works well enough. When the line says
+        "biased", it's usually right.
+      </p>
+
+      <h2>A thousand coins</h2>
+
+      <p>
+        Now I change the game. I have 1,000 coins. One of them is the
+        p&nbsp;=&nbsp;0.6 coin and the other 999 are fair. You flip each one
+        100 times, and you have to tell me which one is biased.
+      </p>
+
+      <p>
+        The obvious move is to pick the coin with the most heads. The
+        problem is what that coin is competing against. The biased coin
+        averages 60 heads. But you're not comparing it to <em>a</em> fair
+        coin that averages 50. You're comparing it to the <em>best</em> of
+        999 fair coins, and that coin averages 66.
+      </p>
+
+      <img src="../../assets/mc_thousand_coins.png" alt="Left: heads for one fair coin, the biased coin, and the best of 999 fair coins. Right: probability that the top coin is the biased one against flips per coin"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        That's the whole problem in one picture. A single fair coin is
+        centred on E[x]&nbsp;=&nbsp;50. When you pick the best of many,
+        you're no longer looking at E[x], you're looking at max(x), and its
+        distribution is a different animal: it's shifted far to the right
+        and much narrower. The biased coin sits between the two. It beats a
+        typical fair coin easily, and it loses to the best fair coin almost
+        every time.
+      </p>
+
+      <p>
+        In my simulation the top coin was the biased one only 12% of the
+        time. The other 88% you'd confidently hand me a fair coin. And the
+        5% test from before is useless here. With 999 fair coins you expect
+        about 44 of them to cross the 59-head line, so you'd get a pile of
+        "biased" coins with the real one somewhere in it, if it made it at
+        all.
+      </p>
+
+      <p>
+        You can tighten the threshold. The Bonferroni correction divides the
+        5% by the number of tests, which here means requiring 70 heads. That
+        kills the false positives, but the biased coin only gets 70 heads
+        2.5% of the time. You've traded finding the wrong coin for finding
+        no coin.
+      </p>
+
+      <p>
+        The only real fix is more data. The right panel shows how the odds
+        change with more flips per coin. At 300 flips you find it 60% of the
+        time, and you need around 750 flips to be close to sure. The bias
+        didn't get bigger; you just needed enough flips for the biased coin
+        to outrun the luckiest fair coin, not the average one.
+      </p>
+
+      <h2>A thousand strategies</h2>
+
+      <p>
+        Replace "coin" with "strategy" and "heads" with "PnL" and you have a
+        normal week of quant research. You have an idea, it has a few
+        parameters, and you run a grid: 10 lookbacks, 10 thresholds, 10
+        exit rules. That's 1,000 backtests. You sort by Sharpe and look at
+        the top.
+      </p>
+
+      <p>
+        To see what the top looks like when there's nothing to find, I
+        generated 1,000 strategies with zero edge: daily returns that are
+        pure noise with mean zero. I backtested each one over a year, picked
+        the one with the best Sharpe ratio, and then ran that same strategy
+        for another year. I repeated the whole thing 2,000 times.
+      </p>
+
+      <img src="../../assets/mc_backtests.png" alt="Left: in-sample Sharpe of the best of 1,000 zero-edge strategies and its Sharpe the next year. Right: expected best Sharpe against the number of strategies tried"
+        style="width:100%;margin:24px 0;border:1px solid var(--dim);">
+
+      <p>
+        The best backtest has an average Sharpe of 3.3, and in 95% of
+        the runs it was above 2.8. A Sharpe of 3 on a year of daily data looks like a
+        strategy you'd be excited to show people. The next year, the same
+        strategy averages a Sharpe of 0, because that's what it always was.
+        The backtest wasn't measuring the strategy. It was measuring how
+        hard I searched.
+      </p>
+
+      <p>
+        The right panel makes this explicit. For strategies with no edge,
+        the expected best Sharpe grows with the number of strategies you
+        try: about 1.6 after 10 tries, 2.5 after 100, 3.3 after 1,000. The
+        white line is the approximation
+        <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2460551">Bailey &amp; López de Prado (2014)</a>
+        use for the expected maximum of N independent normals. It's the bar
+        your best backtest has to clear before it means anything, and it
+        rises with every trial you run.
+      </p>
+
+      <h2>What to do about it</h2>
+
+      <p>
+        The coin game gives you most of the answers.
+      </p>
+
+      <ul>
+        <li>
+          <strong>Count your trials.</strong> The number that matters isn't
+          the Sharpe of your best backtest. It's how far that Sharpe sits
+          above what the best of N zero-edge strategies would get. To know
+          that you need N, including the variants you tried last month and
+          threw away. Bailey &amp; López de Prado's <em>deflated Sharpe
+          ratio</em> is built on exactly this.
+        </li>
+        <li>
+          <strong>Keep a holdout you never search on.</strong> Out-of-sample
+          data does for strategies what the second year did in the
+          simulation: it measures E[x] for the strategy you picked instead of
+          max(x) over all the ones you didn't. It only works once. If you
+          look at the holdout, change something, and look again, it becomes
+          part of the search.
+        </li>
+        <li>
+          <strong>Get more flips.</strong> A real edge separates from luck
+          as the sample grows, and luck doesn't. More history, more markets,
+          or more independent periods all shrink the gap between the best
+          noise and the real thing.
+        </li>
+        <li>
+          <strong>Search less.</strong> Every extra parameter multiplies N.
+          A strategy you can explain before you backtest it is a search of
+          one.
+        </li>
+      </ul>
+
+      <p>
+        None of this says the best backtest is fake. The biased coin was in
+        there, and sometimes it really was on top. It says the best result
+        of a search is a biased estimate of how good the winner is, and the
+        bias grows with the size of the search. If you only remember the
+        winner and forget the 999 losers, you'll overestimate your edge
+        every time.
+      </p>
+
+      <h2>The code</h2>
+
+      <p>
+        The core of the coin experiment is two lines of numpy:
+      </p>
+
+<pre><code>fair_max = rng.binomial(n_flips, 0.5, size=(n_reps, 999)).max(axis=1)
+biased = rng.binomial(n_flips, 0.6, size=n_reps)</code></pre>
+
+      <p>
+        The full simulation, including the strategy sweep and the code for
+        the three figures, is in <a href="code.py">code.py</a>.
+      </p>
