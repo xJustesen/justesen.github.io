@@ -42,7 +42,6 @@ body {
   margin-bottom: auto;
   max-width: 520px;
   text-align: left;
-  animation: fadeIn 1.8s ease-out;
   padding-bottom: 80px;
 }
 
@@ -65,7 +64,6 @@ body::before {
 /* Layout */
 .container {
   text-align: center;
-  animation: fadeIn 1.8s ease-out;
 }
 
 /* Header */
@@ -217,18 +215,6 @@ body::before {
 .page-nav a:hover::before,
 .page-nav a.active::before {
   color: inherit;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ── Footer ──────────────────────────────────────────────── */
