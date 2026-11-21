@@ -3,12 +3,15 @@ layout: base
 ---
   <div class="container">
 
+    <p class="prompt"><span class="prompt-user">jbj@xyz</span><span class="prompt-path">:~$</span> whoami</p>
     <h1 class="title">justesen<span class="dot">.</span><span class="tld">xyz</span></h1>
     <p class="tagline">data · analytics · trading</p>
 
     <div class="dist-section" id="distSection">
       <div class="hist" id="hist"></div>
       <div class="axis-line"></div>
+      <div class="axis-labels"><span>-3</span><span>0</span><span>+3</span></div>
+      <p class="stats" id="stats">n=<span>0</span>  μ=<span>0.00</span>  σ=<span>0.00</span></p>
       <nav class="nav" id="nav">
         {%- for item in site.data.nav %}
         <a href="{{ item.url | relative_url }}">{{ item.name }}</a>
